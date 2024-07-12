@@ -1,0 +1,312 @@
+
+---
+title: "OFF-SEN FCP Dashboard" 
+author: "Evidence and Analysis Team"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill 
+    horizontal_layout: fill 
+---
+  
+  <style>
+  
+  .navbar {
+    background-color:#00A33B;
+      border-color:#00A33B;
+  }
+
+.navbar-inverse .navbar-nav > li > a:hover,
+.navbar-inverse .navbar-nav > li > a:focus {
+  background-color: #77BC1F;
+    color: white;
+}
+.navbar-inverse .navbar-nav > .active > a,
+.navbar-inverse .navbar-nav > .active > a:hover,
+.navbar-inverse .navbar-nav > .active > a:focus {
+  color: white;
+  background-color: #77BC1F;
+}
+.navbar-inverse .navbar-toggle:hover,
+.navbar-inverse .navbar-toggle:focus {
+  background-color: #77BC1F;
+}
+.navbar-inverse .navbar-collapse,
+.navbar-inverse .navbar-form {
+  border-color: #77BC1F;
+}
+
+
+.nav .open > a, .nav .open > a:focus, .nav .open > a:hover {
+  background-color: #77BC1F;
+}
+
+.nav > li > a:focus, .nav > li > a:hover {
+  background-color: #77BC1F;
+}
+
+</style>
+
+  
+```{r setup, include=FALSE}
+
+options(repos = "https://cran.r-project.org")
+
+usePackage <- function(p)
+{
+  if (!is.element(p, installed.packages()[, 1]))
+    install.packages(p, dep = TRUE)
+  require(p, character.only = TRUE)
+}
+
+usePackage("plyr") 
+usePackage("flexdashboard")
+usePackage("readr")
+usePackage("dplyr")
+usePackage("ggplot2")
+usePackage("readODS")
+usePackage("magrittr")
+usePackage("plotly")
+usePackage("openxlsx")
+usePackage("stringr")
+usePackage("scales")
+usePackage("tidyr")
+usePackage("survey")
+usePackage("tibble")
+usePackage("knitr")
+usePackage("kableExtra")
+usePackage("scales")
+usePackage("highcharter")
+usePackage("sparkline")
+usePackage("htmlwidgets")
+usePackage("viridis")
+usePackage("labeling")
+usePackage("crosstalk")
+usePackage("ellipsis")
+usePackage("forcats")
+usePackage("farver")
+
+knitr::opts_chunk$set(echo = FALSE)
+
+.libPaths("C:/Users/jb000299/AppData/Local/R/win-library/4.2") # you must run this before knitting - sorts out weird filepath issue with pandoc
+#defra colours from branding document
+#defra_colours <- c("#00A33B", "#FFCC00", "#D9262E", "#6D3075", "#FF9E16", "#007CBA", "#77BC1F", "#D51067", "#48af65")
+defra_colours <- viridis(12)
+
+input_file <- "C:/Users/jb000299/Downloads/20240619-data_for_dashboard.xlsx"
+
+narrative_file<-"C:/Users/jb000299/Downloads/20240619-narrative_for_dashboard.xlsx"
+
+```
+
+1.12a Farming Investment Fund: FETF {data-navmenu="All Metrics" data-orientation=rows}
+=====================================
+
+Row {data-height=90}
+-----------------------------------------------------------------------
+### Title {.no-title}
+
+```{r include=FALSE}
+Narrative_FIF <- read.xlsx(narrative_file, "1.12a")
+
+```
+
+`r Narrative_FIF$title`
+
+Row {data-height=90}
+-----------------------------------------------------------------------
+### Assessment {.no-title}
+
+`r Narrative_FIF$statistic`
+
+Row {data-height=700} 
+-----------------------------------------------------------------------
+
+### Farming Equipment and Technology Fund - Values, 17 May 2024 {data-width=500}
+``` {r productivity_small-val code, echo=FALSE, warning = FALSE}
+
+Grants <- read.xlsx(input_file, "1.12a")
+
+FETF <-  Grants[which(Grants$Scheme == "FETF 2024: AH&W" | Grants$Scheme == "FETF 2024: Productivity" | Grants$Scheme == "FETF 2024: Slurry" | Grants$Scheme == "FETF 2023: AH&W" | Grants$Scheme == "FETF 2023: Productivity & Slurry" | Grants$Scheme == "FETF: Round One"),]
+
+FETF <- FETF %>%
+  mutate(Scheme = factor(Scheme, levels = c('FETF 2024: Productivity', 'FETF 2024: Slurry','FETF 2024: AH&W', 'FETF 2023: Productivity & Slurry', 'FETF 2023: AH&W', "FETF: Round One"))) %>%
+  mutate(Measure = factor(Measure, levels= c('Budget', 'Approved', 'Paid')))
+
+# Define hex codes for colors
+colour_codes <- c("#E95E3E", "#5DC58A", "#1f58c2")
+
+plt <- ggplot(FETF, aes(x=Scheme, y=Value, fill = Measure, text = paste("Scheme:", Scheme, "<br>", Measure, ": £", Value2, "<br>", "Status:", Status))) +
+  geom_bar(position = "dodge",stat = "identity") + 
+  theme_bw() +
+  ylab("Value (£ millions)") +
+  scale_fill_manual(values = colour_codes, name=NULL) +
+  theme(plot.title = element_text(size = 10)) +
+  scale_y_continuous(limits=c(0,75)) +
+  scale_x_discrete(limits = rev, labels = function(x) str_wrap(x, width = 10))
+
+ggplotly(plt, tooltip = "text") %>%   layout(hovermode = "x")
+
+
+```
+
+
+### Farming Equipment and Technology Fund - Application and Claims, 17 May 2024 {data-width=500}
+``` {r productivity_small-app code2, echo=FALSE, warning = FALSE}
+
+Grants <- read.xlsx(input_file, "1.12a2")
+
+FETF <-  Grants[which(Grants$Scheme == "FETF 2024: AH&W" | Grants$Scheme == "FETF 2024: Productivity" | Grants$Scheme == "FETF 2024: Slurry" | Grants$Scheme == "FETF 2023: AH&W" | Grants$Scheme == "FETF 2023: Productivity & Slurry" | Grants$Scheme == "FETF: Round One"),]
+
+FETF <- FETF %>%
+  mutate(Scheme = factor(Scheme, levels = c('FETF 2024: Productivity', 'FETF 2024: Slurry','FETF 2024: AH&W', 'FETF 2023: Productivity & Slurry', 'FETF 2023: AH&W', "FETF: Round One"))) %>%
+  mutate(Measure = factor(Measure, levels= c('Budget', 'OA Approved', 'FA Approved', 'Paid')))
+
+# Define hex codes for colors
+colour_codes2 <- c("#E95E3E", "#5DC58A", "#1f58c2")
+
+plt <- ggplot(FETF, aes(x=Scheme, y=Value, fill = Measure, text = paste("Scheme:", Scheme, "<br>", Measure, ":", Value2, "<br>", "Status:", Status))) +
+  geom_bar(position = "dodge",stat = "identity") + 
+  theme_bw() +
+  ylab("Number") +
+  scale_fill_manual(values = colour_codes2, name=NULL) +
+  theme(plot.title = element_text(size = 10)) +
+  scale_y_continuous(limits=c(0,6500)) +
+  scale_x_discrete(limits = rev, labels = function(x) str_wrap(x, width = 10))
+
+ggplotly(plt, tooltip = "text") %>%   layout(hovermode = "x")
+
+
+```
+
+Row {data-height=150} {.tabset .tabset-fade}
+-----------------------------------------------------------------------
+
+### Narrative and Insights
+
+`r Narrative_FIF$narrative`
+
+### Data Explainer
+
+`r Narrative_FIF$explainer`
+
+### Source
+
+`r Narrative_FIF$source`
+
+### Confidence
+
+`r Narrative_FIF$confidence`
+
+### Distribution
+
+`r Narrative_FIF$distribution`
+
+
+### Dates
+
+`r Narrative_FIF$update_date`
+
+1.12b Farming Investment Fund: Large Grants {data-navmenu="All Metrics" data-orientation=rows}
+=====================================
+
+Row {data-height=90}
+-----------------------------------------------------------------------
+### Title {.no-title}
+
+```{r include=FALSE}
+Narrative_FIF <- read.xlsx(narrative_file, "1.12b")
+
+```
+
+`r Narrative_FIF$title`
+
+Row {data-height=90}
+-----------------------------------------------------------------------
+### Assessment {.no-title}
+
+`r Narrative_FIF$statistic`
+
+Row {data-height=700} 
+-----------------------------------------------------------------------
+
+### Farming Investment Fund: Large Grants - Value, 17 May 2024 {data-width=500}
+``` {r productivity_large-val code, echo=FALSE, warning = FALSE}
+
+Grants <- read.xlsx(input_file, "1.12b")
+
+FTF <- Grants %>%
+  mutate(Scheme = factor(Scheme, levels = c('Large Grants: Adding Value - Round One', 'Large Grants: Productivity - Round Two', 'Large Grants: Productivity - Round One','Large Grants: Slurry - Round Two', 'Large Grants: Slurry - Round One', 'Large Grants: Water - Round Two', 'Large Grants: Water - Round One'))) %>%
+  mutate(Measure = factor(Measure, levels= c('Budget', 'OA Approved', 'FA Approved', 'Paid')))
+
+# Define hex codes for colors
+colour_codes <- c("#E95E3E", "#8E44AD", "#5DC58A", "#1f58c2")
+
+plt <- ggplot(FTF, aes(x=Scheme, y=Value, fill = Measure, text = paste("Scheme:", Scheme, "<br>", Measure, ": £", Value2, "<br>", "Status:", Status))) +
+  geom_bar(position = "dodge",stat = "identity") + 
+  theme_bw() +
+  ylab("Value (£ millions)") +
+  scale_fill_manual(values = colour_codes, name=NULL) +
+  theme(plot.title = element_text(size = 10)) +
+  scale_y_continuous(limits=c(0,125)) +
+  scale_x_discrete(limits = rev, labels = function(x) str_wrap(x, width = 10))
+
+ggplotly(plt, tooltip = "text") %>%   layout(hovermode = "x")
+
+
+```
+
+
+### Farming Investment Fund: Large Grants - Applications and Claims, 17 May 2024 {data-width=500}
+``` {r productivity_large-app code, echo=FALSE, warning = FALSE}
+Grants <- read.xlsx(input_file, "1.12b2")
+
+FTF <- Grants %>%
+  mutate(Scheme = factor(Scheme, levels = c('Large Grants: Adding Value - Round One', 'Large Grants: Productivity - Round Two', 'Large Grants: Productivity - Round One','Large Grants: Slurry - Round Two', 'Large Grants: Slurry - Round One', 'Large Grants: Water - Round Two', 'Large Grants: Water - Round One'))) %>%
+  mutate(Measure = factor(Measure, levels= c('Online Applications', 'Full Applications', 'Claims')))
+
+colour_codes2 <- c("#5DC58A", "#3E8EC2", "#1f58c2")
+
+#I reorder the scheme so the labels don't over lap with reorder(Scheme, desc(Scheme)
+plt <- ggplot(FTF, aes(x= Scheme, y=Value, fill = Measure, text = paste("Scheme:", Scheme, "<br>", Measure, ":", Value2, "<br>",  "Status:", Status))) +
+  geom_bar(position = "dodge", stat = "identity") + 
+  theme_bw() +
+  ylab("Number") +
+  scale_x_discrete(limits = rev, labels = function(x) str_wrap(x, width = 10))+
+  scale_fill_manual(values = colour_codes2, name=NULL) +
+  theme(plot.title = element_text(size = 10), legend.title = element_blank()) +
+ scale_y_continuous(limits=c(0, 2250))
+
+ggplotly(plt, tooltip = "text") %>%   layout(hovermode = "x")
+legend.key.height=unit(2, "cm")
+
+```
+
+Row {data-height=150} {.tabset .tabset-fade}
+-----------------------------------------------------------------------
+
+### Narrative and Insights
+
+`r Narrative_FIF$narrative`
+
+### Data Explainer
+
+`r Narrative_FIF$explainer`
+
+### Source
+
+`r Narrative_FIF$source`
+
+### Confidence
+
+`r Narrative_FIF$confidence`
+
+### Distribution
+
+`r Narrative_FIF$distribution`
+
+
+### Dates
+
+`r Narrative_FIF$update_date`
